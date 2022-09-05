@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html >
+	<head>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+		<script src="{{url_for('static', filename='js/converters.js')}}"></script>
+		<script src="{{url_for('static', filename='js/cookies.js')}}"></script>
+	</head>
+	<body>
+	<div class='login'>
+		Текущая запись: <p id="hello"></p><br />
+		username = <input id="input_username"> password = <input id="input_password"><br />
+		<button class='exit' id="exit">Выйти</button> <button class='get_login'>Логин</button> <button class='get_register'>Регистрация</button><br />
+		<div style="display: inline-block">Результат:  </div> <div class='result2' style="display: inline-block"></div>
+    </div>
+	<hr><hr><hr><hr>
+	<div class='wrapper'>
+		A = <input type="number" id="input_A"> +
+		B = <input type="number" id="input_B">
+		<button class='get_result'>Calculate</button><br /><br />
+		Выбрать файл: <input type="file" id="file_input">
+		<button class='upload'>Загрузить</button><br /><br />
+		<textarea style="resize: none;" id="pastebox" rows="3">Выделить бок и нажать CTRL + V</textarea><br/>
+		<div style="display: inline-block">Результат: </div> <div class='result' style="display: inline-block"></div>
+		<div class='imgbox'></div>
+    </div>
+	<script charset="utf-8">
+		document.getElementById("hello").innerHTML = document.cookie;
+		
+		if (getCookie("username") == ""){
+			document.getElementById("exit").style.display = "none"
+			document.getElementById("hello").style.display = "none"
+		} else {
+			document.getElementById("exit").style.display = "inline"
+			document.getElementById("hello").style.display = "inline"
+		}
+		$(document).ready(function(){	
+			$('.wrapper').on('click', '.get_result', function(){
+				var val1 = $("#input_A").val();
+				var val2 = $("#input_B").val();
+				$.ajax({
+					url: "/calculate_result",
+					type: "POST",
+					data: {'val1': val1, 'val2': val2},
+					success: function(response) {
+						$(".result").html('<p>'+response.result.toString()+'</p>');
+					},
+				});
+			});	
+			$('.wrapper').on('click', '.upload', function(){
+				var f = $("#file_input")[0].files[0];
+				filename = f.name
+				var reader = new FileReader();
+				reader.readAsArrayBuffer(f);
+				reader.onload = function (evt) {
+					var strBytes = new Uint8Array(reader.result);
+					data = buf2hex(strBytes)
+					var b64 = btoa(Uint8ToString(strBytes))
+					$.ajax({
+						url: "/upload",
+						type: "POST",
+						data: {'file': data, 'filename': filename},
+						success: function(response) {
+							$(".result").html('<p>'+response.result.toString()+'</p>');
+							$(".imgbox").html('<img style="max-width:500px;" src="data:image/jpg;base64, '+b64+'"></img>');
+						},
+					});
+				}
+			});	
+			$('.login').on('click', '.get_login', function(){
+				var username = $("#input_username").val();
+				var pass = $("#input_password").val();
+				$.ajax({
+					url: "/login",
+					type: "POST",
+					data: {'username': username, 'pass': pass},
+					success: function(response) {
+						$(".result2").html('<p>'+response.result2.toString()+'</p>');
+						if (response.result2.toString() == "ok"){
+							alert("Login successful");
+							document.cookie = "username="+username;
+							document.cookie = "password="+pass;
+							window.open("page1", "_self");
+						}
+					},
+				});
+			});	
+			$('.login').on('click', '.get_register', function(){
+				var username = $("#input_username").val();
+				var pass = $("#input_password").val();
+				$.ajax({
+					url: "/register",
+					type: "POST",
+					data: {'username': username, 'pass': pass},
+					success: function(response) {
+						$(".result2").html('<p>'+response.result2.toString()+'</p>');
+					},
+				});
+			});	
+			$('.login').on('click', '.exit', function(){
+				var cookies = document.cookie.split(";");
+				console.log(cookies.length);
+				for (let i = 0; i<cookies.length; i++){
+					document.cookie = cookies[i]+"; expires=Thu, 01 Jan 1970 00:00:00 UTC;"
+				}
+				window.location.reload()
+			});	
+		});
+		
+		pastebox.onpaste = function(e){
+			retrieveImageFromClipboardAsBlob(e, function(imageBlob){
+				if(imageBlob){
+					sendimage(imageBlob)
+				}
+			});
+		}
+	</script>
+	</body>
+</html>

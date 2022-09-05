@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html >
+	<head>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+		<script src="{{url_for('static', filename='js/converters.js')}}"></script>
+		<script src="{{url_for('static', filename='js/cookies.js')}}"></script>
+	</head>
+	<body>
+		<h1>Hello World Page 2</h1>
+		<p id="hello"></p>
+		<a href="index">main</a>
+		<a href="page1">Page 1</a>
+		<script>
+			document.getElementById("hello").innerHTML = "Hello, "+getCookie("username");
+		</script>
+	</body>
+</html>
